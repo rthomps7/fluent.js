@@ -1,8 +1,3 @@
-// A start to make the fluent.js module work by adding to the object's prototype
-//
-// I'm not really sure how I want this done anyway, so I kinda stopped
-
-
 (function() {
 
 var utils = {
@@ -13,9 +8,6 @@ var utils = {
   },
   args: function(args) {
     return Array.prototype.slice.call(args, 0);
-  },
-  merge: function(a, b) {
-    
   }
 }
 
@@ -70,76 +62,6 @@ StreamObject.prototype.go = function() {
   return this;
 }
 
-// Main fluent object.
-//
-// Would be nice to have this get a name passed from the creator. Not sure
-// what way I want that done yet. So I'm waiting.
-function FluentCreator() {
-  if (!(this instanceof FluentCreator))
-    return new utils.call_constructor(FluentCreator, arguments);
-
-  var args = arguments,
-      _this = this;
-
-  this._vars = {};
-  deps.forEach(function(d) {
-    if (d.__fluent__) d.apply({ applied: true, _this: _this}, args);
-    else d.apply(_this, args);
-  });
-}
-
-FluentCreator.prototype.__fluent__ = true;
-FluentCreator.prototype._ = FluentCreator.prototype.stream = function() {
-  return StreamObject(this);
-}
-
-FluentCreator.prototype.init = function() {
-}
-
-FluentCreator.prototype.var = function(n, d) {
-  var _this = this;
-  this._vars[n] = {
-    value: d,
-    pre: function(d) { return d; },
-    post: Function()
-  }
-  this[n] = function(x) {
-    if (arguments.length == 0) return _this._vars[n].value;
-    _this._vars[n].value = _this._vars[n].pre(x);
-    _this._vars[n].post(_this);
-    return _this;
-  }
-
-  StreamObject.prototype[n] = StreamObject.cache(n);
-
-  return {
-    pre: function(fn) {
-      _this._vars[n].pre = fn;
-      return ret;
-    },
-    post: function(fn) {
-      _this._vars[n].post = fn;
-      return ret;
-    }
-  }
-}
-
-FluentCreator.prototype.vars = function() {
-  utils.args(arguments).forEach(function(d) { _this.var(d) });
-}
-
-FluentCreator.prototype.function = function(n, fn) {
-  var fn = fn || Function(),
-      _this = this;
-
-  this[n] = function() {
-    fn.apply(this, arguments);
-    return _this;
-  }
-
-  StreamObject.prototype[n] = StreamObject.cache(n);
-}
-
 // Creating fluent objects inheritance
 //
 // Influenced by John Resig's Simple JavaScript Inheritance
@@ -148,30 +70,77 @@ function fluent(/* dep1, dep2, ... */) {
     return new utils.call_constructor(fluent, arguments);
   }
 
-  var initializing = false,
-      deps = utils.args(arguments),
-      prototype = {};
+  var _this = this,
+      deps = utils.args(arguments);
 
-  deps.forEach(function(dep) {
-    if (dep.__fluent__) {  // Inheriting from fluent object
-      dep.__creator(prototype);
-    } else {
-      dep(FluentCreator(prototype));
-    }
-  });
-
-  // Base Object Constructor
+  // Main fluent object.
+  //
+  // Would be nice to have this get a name passed from the creator. Not sure
+  // what way I want that done yet. So I'm waiting.
   function FluentObject() {
-    if (initializing) return;
-    (this.init || Function()).apply(this, arguments);
+    if (!(this instanceof FluentObject))
+      return new utils.call_constructor(FluentObject, arguments);
+
+    var args = arguments,
+        _this = this;
+
+    this._vars = {};
+    deps.forEach(function(d) {
+      if (d.__fluent__) d.apply({ applied: true, _this: _this}, args);
+      else d.apply(_this, args);
+    });
   }
 
-  FluentObject.prototype = prototype;
-  FluentObject.prototype.constructor = FluentObject;
-  FluentObject.creator = prototype;
+  FluentObject.prototype.__fluent__ = true;
+  FluentObject.prototype._ = FluentObject.prototype.stream = function() {
+    return StreamObject(this);
+  }
+
+  FluentObject.prototype.var = function(n, d) {
+    var _this = this;
+    this._vars[n] = {
+      value: d,
+      pre: function(d) { return d; },
+      post: Function()
+    }
+    this[n] = function(x) {
+      if (arguments.length == 0) return _this._vars[n].value;
+      _this._vars[n].value = _this._vars[n].pre(x);
+      _this._vars[n].post(_this);
+      return _this;
+    }
+
+    StreamObject.prototype[n] = StreamObject.cache(n);
+
+    return {
+      pre: function(fn) {
+        _this._vars[n].pre = fn;
+        return ret;
+      },
+      post: function(fn) {
+        _this._vars[n].post = fn;
+        return ret;
+      }
+    }
+  }
+
+  FluentObject.prototype.vars = function() {
+    utils.args(arguments).forEach(function(d) { _this.var(d) });
+  }
+
+  FluentObject.prototype.function = function(n, fn) {
+    var fn = fn || Function(),
+        _this = this;
+
+    this[n] = function() {
+      fn.apply(this, arguments);
+      return _this;
+    }
+
+    StreamObject.prototype[n] = StreamObject.cache(n);
+  }
 
   return FluentObject;
-
 }
 
 // Export object

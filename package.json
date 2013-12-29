@@ -1,0 +1,13 @@
+{
+  "name": "fluent.js",
+  "version": "0.0.1",
+  "author": "Robert Thompson <robert@rft.me>",
+  "private" : false,
+  "main" : "fluent.js",
+  "dependencies": {
+  }
+  "repository": "git://github.com/rthomps7/fluent.js,
+  "license": "MIT"
+}
+
+

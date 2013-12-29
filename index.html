@@ -1,0 +1,17 @@
+<script src="fluent.js"></script>
+
+<script>
+  var el = fluent(function() {
+    this.var('test', 7);
+    this.function('t', function() {
+      console.log('WHAT?');
+    })
+  });
+
+  /*
+  var n = fluent(el, function() {
+    this.var('what?', 100);
+  })
+  */
+
+</script>
